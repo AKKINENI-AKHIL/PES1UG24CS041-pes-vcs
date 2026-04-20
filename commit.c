@@ -207,6 +207,20 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
         printf("DEBUG: tree_from_index FAILED\n");
         return -1;
     }
+    
+    Commit c;
+    memset(&c, 0, sizeof(c));
+
+    c.tree = tree_id;
+
+    printf("DEBUG: step 2 - reading HEAD\n");
+    if (head_read(&c.parent) == 0) {
+        c.has_parent = 1;
+        printf("DEBUG: parent found\n");
+    } else {
+        c.has_parent = 0;
+        printf("DEBUG: no parent (first commit)\n");
+    }
     (void)message; (void)commit_id_out;
     return -1;
 }
