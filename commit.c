@@ -251,6 +251,14 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
         free(data);
         return -1;
     }
-    (void)message; (void)commit_id_out;
-    return -1;
+    free(data);
+
+    printf("DEBUG: step 7 - updating HEAD\n");
+    if (head_update(commit_id_out) != 0) {
+        printf("DEBUG: head_update FAILED\n");
+        return -1;
+    }
+
+    printf("DEBUG: SUCCESS - commit created\n");
+    return 0;
 }
