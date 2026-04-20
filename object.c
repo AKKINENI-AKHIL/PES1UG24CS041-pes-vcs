@@ -139,8 +139,46 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     mkdir(".pes", 0755);
     mkdir(".pes/objects", 0755);
     mkdir(dir, 0755);
+    
+ // 5. Temp file
+    char temp_path[512];
+    snprintf(temp_path, sizeof(temp_path), "%s/tmpXXXXXX", dir);
 
+    int fd = mkstemp(temp_path);
+    if (fd < 0) {
+        free(buffer);
+        return -1;
+    }
 
+    // 6. Write data
+    ssize_t written = write(fd, buffer, total_len);
+    if (written != (ssize_t)total_len) {
+        close(fd);
+        unlink(temp_path);
+        free(buffer);
+        return -1;
+    }
+
+    fsync(fd);
+    close(fd);
+
+    // 7. Atomic rename
+    if (rename(temp_path, path) != 0) {
+        unlink(temp_path);
+        free(buffer);
+        return -1;
+    }
+
+    // 8. fsync directory
+    int dir_fd = open(dir, O_DIRECTORY);
+    if (dir_fd >= 0) {
+        fsync(dir_fd);
+        close(dir_fd);
+    }
+
+    free(buffer);
+    return 0;
+}
 // Read an object from the store.
 //
 // Steps:
