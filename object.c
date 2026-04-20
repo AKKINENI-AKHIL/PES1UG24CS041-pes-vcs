@@ -240,3 +240,61 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
         free(buffer);
         return -1;
     }
+
+   // 3. Parse header
+    char *null_pos = memchr(buffer, '\0', size);
+    if (!null_pos) {
+        free(buffer);
+        return -1;
+    }
+
+    size_t header_len = null_pos - (char *)buffer;
+
+    char header[64];
+    if (header_len >= sizeof(header)) {
+        free(buffer);
+        return -1;
+    }
+
+    memcpy(header, buffer, header_len);
+    header[header_len] = '\0';
+
+    char type_str[10];
+    size_t data_size;
+
+    if (sscanf(header, "%s %zu", type_str, &data_size) != 2) {
+        free(buffer);
+        return -1;
+    }
+
+    // Determine type
+    if (strcmp(type_str, "blob") == 0) *type_out = OBJ_BLOB;
+    else if (strcmp(type_str, "tree") == 0) *type_out = OBJ_TREE;
+    else if (strcmp(type_str, "commit") == 0) *type_out = OBJ_COMMIT;
+    else {
+        free(buffer);
+        return -1;
+    }
+
+    // Extract data
+    unsigned char *data_start = (unsigned char *)null_pos + 1;
+
+    if ((size_t)(size - (data_start - buffer)) != data_size) {
+        free(buffer);
+        return -1;
+    }
+
+    void *out = malloc(data_size);
+    if (!out) {
+        free(buffer);
+        return -1;
+    }
+
+    memcpy(out, data_start, data_size);
+
+    *data_out = out;
+    *len_out = data_size;
+
+    free(buffer);
+    return 0;
+}
