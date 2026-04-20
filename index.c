@@ -240,4 +240,29 @@ void *buffer = malloc(alloc_size);
     free(buffer);
     fclose(f);
     return -1;
+}    
+	fclose(f);
+
+    ObjectID id;
+    if (object_write(OBJ_BLOB, buffer, st.st_size, &id) != 0) {
+    printf("object_write failed\n");
+    free(buffer);
+    return -1;
+}
+    free(buffer);
+
+    IndexEntry *e = index_find(index, path);
+
+    if (!e) {
+        if (index->count >= MAX_INDEX_ENTRIES) return -1;
+        e = &index->entries[index->count++];
+    }
+
+    e->mode = (st.st_mode & S_IXUSR) ? 0100755 : 0100644;
+    e->hash = id;
+    e->mtime_sec = st.st_mtime;
+    e->size = st.st_size;
+    strcpy(e->path, path);
+
+    return index_save(index);
 }
