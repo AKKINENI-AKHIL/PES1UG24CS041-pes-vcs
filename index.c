@@ -222,8 +222,22 @@ int index_save(const Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_add(Index *index, const char *path) {
-    // TODO: Implement file staging
-    // (See Lab Appendix for logical steps)
-    (void)index; (void)path;
+    struct stat st;
+    if (stat(path, &st) != 0) return -1;
+
+    FILE *f = fopen(path, "rb");
+    if (!f) return -1;
+
+   size_t alloc_size = (st.st_size == 0) ? 1 : st.st_size;
+void *buffer = malloc(alloc_size);
+    if (!buffer) {
+        fclose(f);
+        return -1;
+    }
+
+    
+    if (fread(buffer, 1, st.st_size, f) != (size_t)st.st_size) {
+    free(buffer);
+    fclose(f);
     return -1;
 }
