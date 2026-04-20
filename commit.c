@@ -221,6 +221,19 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
         c.has_parent = 0;
         printf("DEBUG: no parent (first commit)\n");
     }
+
+      printf("DEBUG: step 3 - setting author\n");
+    const char *author = pes_author();
+    if (!author) author = "unknown";
+    snprintf(c.author, sizeof(c.author), "%s", author);
+
+    c.timestamp = (uint64_t)time(NULL);
+
+    printf("DEBUG: step 4 - setting message\n");
+    if (!message) {
+        printf("DEBUG: message is NULL\n");
+        return -1;
+    }
     (void)message; (void)commit_id_out;
     return -1;
 }
